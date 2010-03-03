@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Hello, Pong</string>
+    <string name="menu_start">Start</string>
+    <string name="menu_stop">Stop</string>
+    <string name="menu_pause">Pause</string>
+    <string name="menu_resume">Resume</string>
+    <string name="mode_ready">Ready</string>
+    <string name="mode_pause">Pause</string>
+    <string name="message_stopped">Stopped</string>
+</resources>

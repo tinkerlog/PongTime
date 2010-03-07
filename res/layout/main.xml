@@ -4,22 +4,12 @@
     android:layout_height="fill_parent">
     
     <com.tinkerlog.android.pong.PongView
-      android:id="@+id/pong"
+      android:id="@+id/pongview"
       android:layout_width="fill_parent"
       android:layout_height="fill_parent"/>
     
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" >
-        <TextView
-          android:id="@+id/text"
-		  android:text="huhu"
-		  android:visibility="visible"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:layout_centerInParent="true"
-          android:gravity="center_horizontal"
-          android:textColor="#88ffffff"
-          android:textSize="24sp"/>
      </RelativeLayout>         
 </FrameLayout>

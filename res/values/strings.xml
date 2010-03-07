@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Hello, Pong</string>
-    <string name="menu_start">Start</string>
-    <string name="menu_stop">Stop</string>
-    <string name="menu_pause">Pause</string>
-    <string name="menu_resume">Resume</string>
-    <string name="mode_ready">Ready</string>
-    <string name="mode_pause">Pause</string>
-    <string name="message_stopped">Stopped</string>
+    <string name="app_name">Pong Time</string>
+    <string name="menu_toggle_fps">Toggle FPS</string>
+    <string name="menu_about">About</string>
+    <string name="about_title">About</string>
+    <string name="about_text">Pong Time v1.0\ndeveloped by Alex Weber\nhttp://tinkerlog.com</string>
 </resources>

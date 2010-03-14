@@ -18,6 +18,7 @@ import android.view.SurfaceView;
 public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback {
 
 	private PongThread thread;
+	private static final boolean DEBUG = false;
     
 	class PongThread extends Thread {
 
@@ -169,7 +170,9 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
             currentMinutes = lastTime.getMinutes();
             
             mode = STATE_PAUSE;
-    		Log.i(this.getClass().getName(), "PongThread");
+            if (DEBUG) {
+            	Log.i(this.getClass().getName(), "PongThread");
+            }
         }		        
         
         public void setSurfaceSize(int width, int height) {
@@ -200,7 +203,9 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
                 newGame(true);
                 setRunning(true);
                 mode = STATE_RUNNING;
-        		Log.i(this.getClass().getName(), "setSurfaceSize");
+                if (DEBUG) {
+                	Log.i(this.getClass().getName(), "setSurfaceSize");
+                }
             }
         }   
         
@@ -213,7 +218,9 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
         }
         
         private void newGame(boolean left) {
-            Log.i(this.getClass().getName(), "new game, left wins: " + left);            
+        	if (DEBUG) {
+        		Log.i(this.getClass().getName(), "new game, left wins: " + left);
+        	}
         	ballY = canvasHeight2;
         	ballX = (left) ? canvasWidth2 - 40 : canvasWidth2 + 40;
         	float d = (float)(Math.random() * 0.8 - 0.4);
@@ -221,7 +228,9 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
         	computeBallSinCos();
         	leftPanelY = canvasHeight2;
         	rightPanelY = canvasHeight2;
-        	Log.i(this.getClass().getName(), "--> " + (left ? "left" : "right") + " wins, new game: " + ballX + " " + ballY);
+        	if (DEBUG) {
+        		Log.i(this.getClass().getName(), "--> " + (left ? "left" : "right") + " wins, new game: " + ballX + " " + ballY);
+        	}
         }
                 
         private void doDraw(Canvas canvas) {
@@ -328,10 +337,12 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
         	if ((ballX < playFieldX1) || (ballX > playFieldX2)) {
         		newGame((ballX > playFieldX2));
         		if ((gMode == GSTATE_HOURSWIN) || (gMode == GSTATE_MINUTESWIN)) {
-            		Log.i(this.getClass().getName(), "stopped");
+            		if (DEBUG) {
+            			Log.i(this.getClass().getName(), "stopped");
+            		}
         			gMode = GSTATE_STOPPED;
         		}
-        		else {
+        		else if (DEBUG) {
             		Log.i(this.getClass().getName(), "oops, we lose! " + ballX);        			
         		}
         	}
@@ -352,14 +363,17 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
         		case GSTATE_PLAY:        			
             		if (currentHours != currentDate.getHours()) {
             			gMode = GSTATE_HOURSWIN;
-                		Log.i(this.getClass().getName(), "hours!");
+            			if (DEBUG) {
+            				Log.i(this.getClass().getName(), "hours!");
+            			}
             		}
             		else if (currentMinutes != currentDate.getMinutes()) {
             			gMode = GSTATE_MINUTESWIN;
-                		Log.i(this.getClass().getName(), "minutes!");
+            			if (DEBUG) {
+            				Log.i(this.getClass().getName(), "minutes!");
+            			}
             		}
             		else {
-                		// Log.i(this.getClass().getName(), "play");
             			currentHours = currentDate.getHours();
             			currentMinutes = currentDate.getMinutes();
             		}
@@ -372,10 +386,14 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
         			}
         			currentHours = currentDate.getHours();
         			currentMinutes = currentDate.getMinutes();
-            		Log.i(this.getClass().getName(), "play on");
+        			if (DEBUG) {
+        				Log.i(this.getClass().getName(), "play on");
+        			}
         			break;
         		default :
-            		Log.i(this.getClass().getName(), "oops! " + gMode);
+        			if (DEBUG) {
+        				Log.i(this.getClass().getName(), "oops! " + gMode);
+        			}
         			gMode = GSTATE_PLAY;
         		}
         	}
@@ -399,7 +417,9 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
         public void run() {
         	int count = 0;
         	long t1 = System.currentTimeMillis();
-    		Log.i(this.getClass().getName(), "entering run");
+        	if (DEBUG) {
+        		Log.i(this.getClass().getName(), "entering run");
+        	}
             while (running) {
                 Canvas c = null;
                 try {
@@ -435,7 +455,7 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
         }
 		
 	} // PongThread
-
+		
     public PongTimeView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
@@ -460,7 +480,9 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
     public void surfaceCreated(SurfaceHolder holder) {
         // start the thread here so that we don't busy-wait in run()
         // waiting for the surface to be created
-		Log.i(this.getClass().getName(), "surfaceCreated");
+    	if (DEBUG) {
+    		Log.i(this.getClass().getName(), "surfaceCreated");
+    	}
         thread.setRunning(true);
         thread.start();
     }

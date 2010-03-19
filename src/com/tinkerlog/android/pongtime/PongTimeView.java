@@ -15,10 +15,39 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+/**
+ * View and thread for updating the pong playfield.
+ * Based on the LunarLander example. 
+ */
 public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback {
 
 	private PongThread thread;
 	private static final boolean DEBUG = false;
+	
+	class Panel {
+		public int x;
+		public int y;
+		public Panel(int x, int y) {
+			this.x = x;
+			this.y = y;
+		}
+	}
+	
+	class Ball {
+		public float x;
+		public float y;
+		public float direction;
+		public float cosDir;
+		public float sinDir;
+		public Ball(float x, float y) {
+			this.x = x;
+			this.y = y;
+		}
+		public void computeDir() {
+			cosDir = (float)Math.cos(direction);
+			sinDir = (float)Math.sin(direction);
+		}
+	}
     
 	class PongThread extends Thread {
 
@@ -33,42 +62,44 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
         
         private static final int NUMBER_Y = 50;
         
-        private static final float BALL_SPEED = 300.0F;  // pixels per seconds
-        private static final float PANEL_SPEED = 250.0F;
-        private static final int PANEL_LENGTH = 20;
-        private static final int PANEL_XPOS = 20;
+        private static final float BALL_SPEED = 300.0F;  // pixels per second
+        private static final float PANEL_SPEED = 250.0F; // pixels per second
+        private static final int PANEL_LENGTH = 20;     
+        private static final int PANEL_XPOS = 25;
         private static final float TWOPI = (float)(Math.PI * 2);
         private static final float MIN_RANGLE = (float)(3 * (Math.PI/4));
         private static final float MAX_RANGLE = (float)(5 * (Math.PI/4));
+        private static final int GHOST_BALLS = 3;
         
-        private static final int LINE_WIDTH = 7;
-        private static final int LW = 15;
-        private static final int LH = 26;
-        private static final int LH2 = LH / 2;
-        private static final int SP = LW + 15;
+        private static final int LINE_WIDTH = 7;         // line width to draw the playfield
+        private static final int PANEL_LINE_WIDTH = 9;   // line width to draw the panels
+        private static final int LW = 15;                // letter width
+        private static final int LH = 26;                // letter height
+        private static final int LH2 = LH / 2;            
+        private static final int SP = LW + 15;           // letter width + space
 
-        private float ballX;
-        private float ballY;
-        private float ballDir;
-        private float ballCosDir;
-        private float ballSinDir;
+        private Ball ball;
+        private Ball[] ghostBalls = new Ball[GHOST_BALLS];
+        private int[] ghostColors = {
+        		Color.rgb(50, 50, 50), 
+        		Color.rgb(100, 100, 100), 
+        		Color.rgb(150, 150, 150)
+        };
+        private int actGhost;
+        private Panel leftPanel;
+        private Panel rightPanel;
         
-        private float leftPanelX;
-        private float leftPanelY;
-        private float rightPanelX;
-        private float rightPanelY;
-        
-        private int number1X;
-        private int number2X;
-        private int number3X;
-        private int number4X;
+        private int number1X;                            // xpos of number 1 (hours)
+        private int number2X;                            // xpos of number 2 (hours)
+        private int number3X;                            // xpos of number 3 (minutes)
+        private int number4X;                            // xpos of number 4 (minutes)
         
         private int currentHours;
         private int currentMinutes;
         private int currentFPS;
         private int waitCount;
         
-        private int playFieldY1;
+        private int playFieldY1;                         // playfield frame
         private int playFieldY2;
         private int playFieldX1;
         private int playFieldX2;
@@ -93,9 +124,8 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
         private Paint textPaint;
 
         private Date currentDate = new Date();
-        // private Context context;
         
-        private float[][] numbers = {
+        private float[][] numbers = {					// lines to draw numbers
         		{ 0, 0, LW, 0,     // null 
         		LW, 0, LW, LH, 
         		LW, LH, 0, LH, 
@@ -148,7 +178,7 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
             panelPaint = new Paint();
             panelPaint.setColor(Color.WHITE);
             panelPaint.setStyle(Paint.Style.STROKE);            
-            panelPaint.setStrokeWidth(9);
+            panelPaint.setStrokeWidth(PANEL_LINE_WIDTH);
             panelPaint.setStrokeCap(Cap.SQUARE);
             
             dashedLinePaint = new Paint();
@@ -163,7 +193,6 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
             textPaint.setTextSize(15);
             textPaint.setColor(Color.GRAY);
             textPaint.setTypeface(Typeface.MONOSPACE);
-
             
             lastTime = new Date(); 
             currentHours = lastTime.getHours();
@@ -181,16 +210,19 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
                 canvasWidth = width;
                 canvasHeight = height;
                 canvasWidth2 = canvasWidth / 2;
-                canvasHeight2 = canvasHeight / 2;
+                canvasHeight2 = canvasHeight / 2;                
                 playFieldY1 = 8;
                 playFieldY2 = canvasHeight - 9;
                 playFieldX1 = 5;
                 playFieldX2 = canvasWidth - 5;
-                leftPanelX = PANEL_XPOS;
-                leftPanelY = canvasHeight / 2;
-                rightPanelX = canvasWidth - PANEL_XPOS;
-                rightPanelY = canvasHeight2;
                 
+                leftPanel = new Panel(PANEL_XPOS, canvasHeight2);
+                rightPanel = new Panel(canvasWidth - PANEL_XPOS, canvasHeight2);
+                ball = new Ball(100, 100);
+                for (int i = 0; i < GHOST_BALLS; i++) {
+                	ghostBalls[i] = new Ball(100, 100);
+                }
+          
                 number1X = canvasWidth2 - 100;
                 number2X = canvasWidth2 - (100 - SP);
                 number3X = canvasWidth2 + (100 - SP - LW);
@@ -221,15 +253,20 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
         	if (DEBUG) {
         		Log.i(this.getClass().getName(), "new game, left wins: " + left);
         	}
-        	ballY = canvasHeight2;
-        	ballX = (left) ? canvasWidth2 - 40 : canvasWidth2 + 40;
+        	ball.y = canvasHeight2;
+        	ball.x = (left) ? canvasWidth2 - 40 : canvasWidth2 + 40;
+        	for (int i = 0; i < GHOST_BALLS; i++) {
+        		ghostBalls[i].x = ball.x;
+        		ghostBalls[i].y = ball.y;
+        	}
         	float d = (float)(Math.random() * 0.8 - 0.4);
-        	ballDir = (left) ? 0.0F + d : (float)Math.PI + d;
-        	computeBallSinCos();
-        	leftPanelY = canvasHeight2;
-        	rightPanelY = canvasHeight2;
+        	ball.direction = (left) ? 0.0F + d : (float)Math.PI + d;
+        	ball.computeDir();
+        	
+        	leftPanel.y = canvasHeight2;
+        	rightPanel.y = canvasHeight2;
         	if (DEBUG) {
-        		Log.i(this.getClass().getName(), "--> " + (left ? "left" : "right") + " wins, new game: " + ballX + " " + ballY);
+        		Log.i(this.getClass().getName(), "--> " + (left ? "left" : "right") + " wins, new game: " + ball.x + " " + ball.y);
         	}
         }
                 
@@ -238,12 +275,23 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
         	if (showFPS) {
         		canvas.drawText("FPS:" + currentFPS, 10, 25, textPaint);
         	}
+        	drawBalls(canvas);
         	drawFieldAndPanels(canvas);
-           	drawTime(canvas, currentHours, currentMinutes);           	
-           	canvas.drawPoint(ballX, ballY, panelPaint);
+           	drawTime(canvas, currentHours, currentMinutes);
         }
         
-        private void drawTime(Canvas canvas, int hours, int minutes ) {
+        private void drawBalls(Canvas canvas) {
+           	int j = actGhost;
+           	for (int i = 0; i < GHOST_BALLS; i++) {
+           		j = (j+1) % GHOST_BALLS;
+           		panelPaint.setColor(ghostColors[i]);
+           		canvas.drawPoint(ghostBalls[j].x, ghostBalls[j].y, panelPaint);
+           	}
+           	panelPaint.setColor(Color.WHITE);
+           	canvas.drawPoint(ball.x, ball.y, panelPaint);        	
+        }
+        
+        private void drawTime(Canvas canvas, int hours, int minutes ) {        	
         	drawNumber(canvas, number1X, NUMBER_Y, hours / 10);
         	drawNumber(canvas, number2X, NUMBER_Y, hours % 10);
         	drawNumber(canvas, number3X, NUMBER_Y, minutes / 10);
@@ -261,8 +309,8 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
             c.drawLine(0, 3, canvasWidth, 3, linePaint);
             c.drawLine(0, canvasHeight-4, canvasWidth, canvasHeight-4, linePaint);
             c.drawLine(canvasWidth / 2, 0, canvasWidth / 2, canvasHeight, dashedLinePaint);
-            c.drawLine(leftPanelX, leftPanelY - PANEL_LENGTH, leftPanelX, leftPanelY + PANEL_LENGTH, panelPaint);
-            c.drawLine(rightPanelX, rightPanelY - PANEL_LENGTH, rightPanelX, rightPanelY + PANEL_LENGTH, panelPaint);            
+            c.drawLine(leftPanel.x, leftPanel.y - PANEL_LENGTH, leftPanel.x, leftPanel.y + PANEL_LENGTH, panelPaint);
+            c.drawLine(rightPanel.x, rightPanel.y - PANEL_LENGTH, rightPanel.x, rightPanel.y + PANEL_LENGTH, panelPaint);            
         }
         
         private void updatePhysics(long now, long deltaMillis) {
@@ -270,72 +318,78 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
         	// update time
         	updateTime(now);        
         	
-        	if (gMode == GSTATE_STOPPED) {
+        	if (gMode == GSTATE_STOPPED || gMode == GSTATE_NONE) {
         		return;
         	}
-        	
+
         	float distance = BALL_SPEED / (1000/deltaMillis);
-        	float dX = (float)(distance * ballCosDir);
-        	float dY = (float)(distance * ballSinDir);
-        	        	        
-        	// check if ball bounces at playfield (top and bottom)
-        	ballY += dY;
-        	if (ballY < playFieldY1) {
-        		ballY = playFieldY1 + (playFieldY1 - ballY);
-        		ballDir = -ballDir;
-        		computeBallSinCos();
-        	}
-        	else if (ballY > playFieldY2) {
-        		ballY = playFieldY2 - (ballY - playFieldY2);
-            	ballDir = -ballDir;
-            	computeBallSinCos();
-        	}
-        	
-        	// check if ball bounces at panels
-        	ballX += dX;
-        	if ((ballX > rightPanelX) &&
-    			(ballY > rightPanelY - PANEL_LENGTH) && 
-    			(ballY < rightPanelY + PANEL_LENGTH)) {
-        		ballX = rightPanelX - 5 - (rightPanelX - ballX);
-        		ballDir = (float)(-ballDir + Math.PI + Math.random() * 0.6 - 0.3);
-        		ballDir = (ballDir > TWOPI) ? ballDir - TWOPI : (ballDir < 0) ? ballDir + TWOPI : ballDir;
-        		if (ballDir < MIN_RANGLE) {
-        			ballDir = MIN_RANGLE;
-        		}
-        		else if (ballDir > MAX_RANGLE) {
-        			ballDir = MAX_RANGLE;
-        		}
-        		computeBallSinCos();
-    		}
-        	else if ((ballX < leftPanelX) &&
-        			(ballY > leftPanelY - PANEL_LENGTH) &&
-        			(ballY < leftPanelY + PANEL_LENGTH)) {
-        		ballX = leftPanelX + (leftPanelX - (ballX));
-        		ballDir = -(float)(ballDir - Math.PI + Math.random() * 0.6 - 0.3);
-        		computeBallSinCos();
-        	}
-        	
+        	float dX = (float)(distance * ball.cosDir);
+        	float dY = (float)(distance * ball.sinDir);
+            
         	// move panels only if neither is about to win
         	if (gMode != GSTATE_HOURSWIN) {
-        		if ((dX > 0) && (ballX > canvasWidth2)) {        		
-        			rightPanelY = movePanel(rightPanelY, ballY, deltaMillis);
+        		if ((dX > 0) && (ball.x > canvasWidth2)) {        		
+        			movePanel(rightPanel, (int)ball.y, deltaMillis);
         		}
         		else {
-        			rightPanelY = movePanel(rightPanelY, canvasHeight2, deltaMillis);        		
+        			movePanel(rightPanel, canvasHeight2, deltaMillis);        		
         		}        	
         	}
     		if (gMode != GSTATE_MINUTESWIN) {
-    			if ((dX < 0) && (ballX < canvasWidth2)) {
-    				leftPanelY = movePanel(leftPanelY, ballY, deltaMillis);
+    			if ((dX < 0) && (ball.x < canvasWidth2)) {
+    				movePanel(leftPanel, (int)ball.y, deltaMillis);
     			}
     			else {
-    				leftPanelY = movePanel(leftPanelY, canvasHeight/2, deltaMillis);
+    				movePanel(leftPanel, canvasHeight2, deltaMillis);
     			}
-    		}
+    		}        	
         	
+    		// update position for one ghost
+    		actGhost = (actGhost + 1) % GHOST_BALLS;
+    		ghostBalls[actGhost].x = ball.x;
+    		ghostBalls[actGhost].y = ball.y;
+    		
+        	// check if ball bounces at playfield (top and bottom)
+        	ball.y += dY;
+        	if (ball.y < playFieldY1) {
+        		ball.y = playFieldY1 + (playFieldY1 - ball.y);
+        		ball.direction = -ball.direction;
+        		ball.computeDir();
+        	}
+        	else if (ball.y > playFieldY2) {
+        		ball.y = playFieldY2 - (ball.y - playFieldY2);
+            	ball.direction = -ball.direction;
+            	ball.computeDir();
+        	}
+        	
+        	// check if ball bounces at panels
+        	ball.x += dX;
+        	if ((ball.x > rightPanel.x) &&
+    			(ball.y > rightPanel.y - PANEL_LENGTH) && 
+    			(ball.y < rightPanel.y + PANEL_LENGTH)) {
+        		ball.x = rightPanel.x + (rightPanel.x - ball.x);
+        		// try to keep the ball direction in between +/- 45 degrees
+        		ball.direction = (float)(-ball.direction + Math.PI + Math.random() * 0.6 - 0.3);
+        		ball.direction = (ball.direction > TWOPI) ? ball.direction - TWOPI : (ball.direction < 0) ? ball.direction + TWOPI : ball.direction;
+        		if (ball.direction < MIN_RANGLE) {
+        			ball.direction = MIN_RANGLE;
+        		}
+        		else if (ball.direction > MAX_RANGLE) {
+        			ball.direction = MAX_RANGLE;
+        		}
+        		ball.computeDir();
+    		}
+        	else if ((ball.x < leftPanel.x) &&
+        			(ball.y > leftPanel.y - PANEL_LENGTH) &&
+        			(ball.y < leftPanel.y + PANEL_LENGTH)) {
+        		ball.x = leftPanel.x + (leftPanel.x - (ball.x));
+        		ball.direction = -(float)(ball.direction - Math.PI + Math.random() * 0.6 - 0.3);
+        		ball.computeDir();
+        	}
+        	        	
         	// check if ball leaves the playfield.
-        	if ((ballX < playFieldX1) || (ballX > playFieldX2)) {
-        		newGame((ballX > playFieldX2));
+        	if ((ball.x < playFieldX1) || (ball.x > playFieldX2)) {
+        		newGame(gMode != GSTATE_MINUTESWIN);
         		if ((gMode == GSTATE_HOURSWIN) || (gMode == GSTATE_MINUTESWIN)) {
             		if (DEBUG) {
             			Log.i(this.getClass().getName(), "stopped");
@@ -343,12 +397,18 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
         			gMode = GSTATE_STOPPED;
         		}
         		else if (DEBUG) {
-            		Log.i(this.getClass().getName(), "oops, we lose! " + ballX);        			
+            		Log.i(this.getClass().getName(), "oops, we lose! " + ball.x);        			
         		}
         	}
-        	
         }
         
+        private void movePanel(Panel p, int target, long deltaMillis) {
+        	int dPanel = target - p.y;
+        	if (Math.abs(dPanel) > 5) {
+        		int distance = (int)(PANEL_SPEED / (1000/deltaMillis));
+        		p.y += (dPanel > 0) ? distance : -distance;
+        	}
+        }
         
         private void updateTime(long now) {
         	now = System.currentTimeMillis();
@@ -390,29 +450,25 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
         				Log.i(this.getClass().getName(), "play on");
         			}
         			break;
+        		case GSTATE_NONE:
+        			if (DEBUG) {
+        				Log.i(this.getClass().getName(), "waiting ...");
+        			}
+        			waitCount++;
+        			if (waitCount >= 3) {
+        				gMode = GSTATE_PLAY;
+        				waitCount = 0;
+        			}
+        			break;
         		default :
         			if (DEBUG) {
-        				Log.i(this.getClass().getName(), "oops! " + gMode);
+        				Log.i(this.getClass().getName(), "ooops! " + gMode);
         			}
         			gMode = GSTATE_PLAY;
         		}
         	}
         }
         
-        private void computeBallSinCos() {
-        	ballCosDir = (float)Math.cos(ballDir);
-        	ballSinDir = (float)Math.sin(ballDir);
-        }
-
-        private float movePanel(float y, float target, long deltaMillis) {
-        	float dPanel = target - y;
-        	if (Math.abs(dPanel) > 10) {
-        		float distance = PANEL_SPEED / (1000/deltaMillis);
-        		y += (dPanel > 0) ? distance : -distance;
-        	}
-        	return y;
-        }
-		
         @Override
         public void run() {
         	int count = 0;
@@ -428,19 +484,17 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
                     	count++;
                         long now = System.currentTimeMillis(); 
                         long delta = now - lastTimeMillis;
-                        	updatePhysics(now, delta);
-                        	lastTimeMillis = now;
-                    	
-                        	if (now - t1 > 5000) {
-                        		// Log.i(this.getClass().getName(), "FPS:" + count/5);
-                        		currentFPS = count/5;
-                        		// setMessage("FPS: " + count/5);
-                        		t1 = now;
-                        		count = 0;
-                        	}
-                        	synchronized (surfaceHolder) {
-                        		doDraw(c);
-                        	}
+                        updatePhysics(now, delta);
+                        lastTimeMillis = now;
+
+                        if (now - t1 > 5000) {
+                        	currentFPS = count/5;
+                        	t1 = now;
+                        	count = 0;
+                        }
+                        synchronized (surfaceHolder) {
+                        	doDraw(c);
+                        }
                     }
                 } 
                 finally {
@@ -472,8 +526,7 @@ public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback 
     	return thread;
     }
     
-    public void surfaceChanged(SurfaceHolder holder, int format, int width,
-            int height) {
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         thread.setSurfaceSize(width, height);
     }
 

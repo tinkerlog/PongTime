@@ -14,6 +14,10 @@ import android.view.WindowManager;
 import com.tinkerlog.android.pongtime.R;
 import com.tinkerlog.android.pongtime.PongTimeView.PongThread;
 
+/**
+ * Entry point for PongTime.
+ * Based on the LunarLander example. 
+ */
 public class PongTime extends Activity {
 	
 	private static final int MENU_TOGGLEFPS = 1;
@@ -76,6 +80,5 @@ public class PongTime extends Activity {
         pongView = (PongTimeView)findViewById(R.id.pongview);
         pongThread = pongView.getThread();
     }
-
 }
 

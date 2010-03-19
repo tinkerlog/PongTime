@@ -18,6 +18,9 @@ import android.view.SurfaceView;
 /**
  * View and thread for updating the pong playfield.
  * Based on the LunarLander example. 
+ * 
+ * This code is not as beauty as could be. It is optimized to avoid garbage collection
+ * which would make the display updates stutter.
  */
 public class PongTimeView extends SurfaceView implements SurfaceHolder.Callback {
 

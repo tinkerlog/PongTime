@@ -1,0 +1,17 @@
+
+ PongTime
+ --------
+ 
+ PongTime is a Pong Clock for Android phones (v1.5+). Runs smoothly
+ on a Motorola Milestone/Droid. If screen updates stutter, try to
+ shutdown background tasks.
+ 
+ Some corners in the source are a bit ugly, due to optimizations. Mostly 
+ avoiding object creation and garbage collection.
+ 
+ License is BSD style, see LICENSE.
+ 
+ Feel free to do whatever you want with it. Enjoy.
+ 
+ http://tinkerlog.com
+ 

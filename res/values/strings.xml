@@ -4,5 +4,5 @@
     <string name="menu_toggle_fps">Toggle FPS</string>
     <string name="menu_about">About</string>
     <string name="about_title">About</string>
-    <string name="about_text">Pong Time v1.0\ndeveloped by Alex Weber\nhttp://tinkerlog.com</string>
+    <string name="about_text">Pong Time v1.01\ndeveloped by Alex Weber\nhttp://tinkerlog.com</string>
 </resources>

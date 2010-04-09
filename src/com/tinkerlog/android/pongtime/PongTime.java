@@ -71,8 +71,8 @@ public class PongTime extends Activity {
 
         // turn off the window's title bar and switch to fullscreen
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, 
-                WindowManager.LayoutParams.FLAG_FULLSCREEN );
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         // tell system to use the layout defined in our XML file
         setContentView(R.layout.main);
